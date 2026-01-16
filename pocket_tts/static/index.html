@@ -127,6 +127,14 @@
             <p class="text-xs text-gray-500 mt-2">
                 Note: generation runs sequentially to avoid concurrent model use.
             </p>
+
+            <div id="combined-audio-section" class="hidden mt-4">
+                <h3 class="text-base font-semibold mb-2">Combined Audio (Panel 1 + Panel 2)</h3>
+                <audio id="combined-audio" controls class="w-full"></audio>
+                <div class="mt-2">
+                    <a id="combined-download-link" class="text-blue-600 text-sm hover:underline">Download Combined</a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -248,6 +256,9 @@
         const left = getPanelRefs('left');
         const right = getPanelRefs('right');
         const generateBothBtn = document.getElementById('generate-both-btn');
+        const combinedAudioSection = document.getElementById('combined-audio-section');
+        const combinedAudio = document.getElementById('combined-audio');
+        const combinedDownloadLink = document.getElementById('combined-download-link');
 
         function showStatus(panel, message, isLoading = false) {
             panel.statusText.textContent = message;
@@ -262,6 +273,45 @@
             generateBothBtn.disabled = disabled;
         }
 
+        async function parseWavBlob(blob) {
+            const buf = await blob.arrayBuffer();
+            if (buf.byteLength < 44) throw new Error('Invalid WAV (too short)');
+            const view = new DataView(buf, 0, 44);
+            const riff = String.fromCharCode(...new Uint8Array(buf, 0, 4));
+            const wave = String.fromCharCode(...new Uint8Array(buf, 8, 4));
+            if (riff !== 'RIFF' || wave !== 'WAVE') throw new Error('Invalid WAV file');
+            const numChannels = view.getUint16(22, true);
+            const sampleRate = view.getUint32(24, true);
+            const bitsPerSample = view.getUint16(34, true);
+            const pcmBytes = new Uint8Array(buf, 44);
+            return { numChannels, sampleRate, bitsPerSample, pcmBytes };
+        }
+
+        function buildWavBlobFromPcm(pcmBytes, sampleRate, numChannels, bitsPerSample = 16) {
+            const blockAlign = numChannels * (bitsPerSample / 8);
+            const byteRate = sampleRate * blockAlign;
+            const dataSize = pcmBytes.length;
+            const header = new ArrayBuffer(44);
+            const dv = new DataView(header);
+            const u8 = new Uint8Array(header);
+            const writeStr = (offset, str) => { for (let i = 0; i < str.length; i++) u8[offset + i] = str.charCodeAt(i); };
+
+            writeStr(0, 'RIFF');
+            dv.setUint32(4, 36 + dataSize, true);
+            writeStr(8, 'WAVE');
+            writeStr(12, 'fmt ');
+            dv.setUint32(16, 16, true); // Subchunk1Size for PCM
+            dv.setUint16(20, 1, true);  // AudioFormat PCM
+            dv.setUint16(22, numChannels, true);
+            dv.setUint32(24, sampleRate, true);
+            dv.setUint32(28, byteRate, true);
+            dv.setUint16(32, blockAlign, true);
+            dv.setUint16(34, bitsPerSample, true);
+            writeStr(36, 'data');
+            dv.setUint32(40, dataSize, true);
+
+            return new Blob([header, pcmBytes], { type: 'audio/wav' });
+        }
         async function generate(panel, label) {
             const text = panel.textInput.value.trim();
             if (!text) {
@@ -341,6 +391,7 @@
                 panel.downloadLink.href = audioUrl;
                 panel.downloadLink.download = `${label}-tts-audio.wav`;
                 panel.audioSection.classList.remove('hidden');
+                return blob;
             } catch (error) {
                 console.error('Error generating audio:', error);
                 showStatus(panel, `Error: ${error.message}`, false);
@@ -358,8 +409,34 @@
         generateBothBtn.addEventListener('click', async () => {
             setAllDisabled(true);
             try {
-                await generate(left, 'panel1');
-                await generate(right, 'panel2');
+                const leftBlob = await generate(left, 'panel1');
+                const rightBlob = await generate(right, 'panel2');
+                if (!leftBlob || !rightBlob) return;
+
+                const leftWav = await parseWavBlob(leftBlob);
+                const rightWav = await parseWavBlob(rightBlob);
+
+                if (leftWav.sampleRate !== rightWav.sampleRate || leftWav.numChannels !== rightWav.numChannels) {
+                    console.warn('Mismatched WAV formats; cannot combine.');
+                    return;
+                }
+
+                const combinedPcm = new Uint8Array(leftWav.pcmBytes.length + rightWav.pcmBytes.length);
+                combinedPcm.set(leftWav.pcmBytes, 0);
+                combinedPcm.set(rightWav.pcmBytes, leftWav.pcmBytes.length);
+
+                const combinedBlob = buildWavBlobFromPcm(
+                    combinedPcm,
+                    leftWav.sampleRate,
+                    leftWav.numChannels,
+                    leftWav.bitsPerSample
+                );
+
+                const url = URL.createObjectURL(combinedBlob);
+                combinedAudio.src = url;
+                combinedDownloadLink.href = url;
+                combinedDownloadLink.download = 'combined-tts-audio.wav';
+                combinedAudioSection.classList.remove('hidden');
             } finally {
                 setAllDisabled(false);
             }
