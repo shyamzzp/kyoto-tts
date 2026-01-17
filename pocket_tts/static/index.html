@@ -86,17 +86,17 @@
                 >Hello world. I am Kyutai's Pocket TTS. I'm fast enough to run on small CPUs. I hope you'll like me.</textarea>
 
                 <div class="grid grid-cols-2 gap-2">
-                    <button
-                        id="left-generate-btn"
-                        class="px-4 py-2 rounded text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                        <span id="left-generate-text">Generate</span>
+                    <button id="left-generate-btn" class="w-10 h-10 p-2 rounded text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center" aria-label="Generate" title="Generate">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 21l-2.813-5.096L1 13l5.188-.904L9 7l2.813 5.096L17 13l-7.187 2.904Zm9.187-7.904.563 2.25L22 6l-2.437-.75L18.999 3l-.563 2.25L16 6l2.436 1.25.564 2.25.563-2.25L22 6l-2.437-1.25L19.063 3Z" />
+                        </svg>
+                        <span id="left-generate-text" class="sr-only">Generate</span>
                     </button>
-                    <button
-                        id="left-generate-play-btn"
-                        class="px-4 py-2 rounded text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                        <span id="left-generate-play-text">Generate & Play</span>
+                    <button id="left-generate-play-btn" class="w-10 h-10 p-2 rounded text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center" aria-label="Generate and Play" title="Generate and Play">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 5.653 12 6.347-12 6.347V5.653Z" />
+                        </svg>
+                        <span id="left-generate-play-text" class="sr-only">Generate & Play</span>
                     </button>
                 </div>
 
@@ -111,7 +111,12 @@
                     <h3 class="text-base font-semibold mb-2">Generated Audio (Panel 1)</h3>
                     <audio id="left-audio" controls class="w-full"></audio>
                     <div class="mt-2">
-                        <a id="left-download-link" class="text-blue-600 text-sm hover:underline">Download</a>
+                        <a id="left-download-link" class="inline-flex items-center text-blue-600 text-sm hover:underline" aria-label="Download" title="Download">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M7.5 12l4.5 4.5L16.5 12M12 3v13.5"/>
+                            </svg>
+                            <span class="sr-only">Download</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -127,17 +132,17 @@
                 >This is the second panel. You can enter different text here and generate another audio.</textarea>
 
                 <div class="grid grid-cols-2 gap-2">
-                    <button
-                        id="right-generate-btn"
-                        class="px-4 py-2 rounded text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                        <span id="right-generate-text">Generate</span>
+                    <button id="right-generate-btn" class="w-10 h-10 p-2 rounded text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center" aria-label="Generate" title="Generate">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 21l-2.813-5.096L1 13l5.188-.904L9 7l2.813 5.096L17 13l-7.187 2.904Zm9.187-7.904.563 2.25L22 6l-2.437-.75L18.999 3l-.563 2.25L16 6l2.436 1.25.564 2.25.563-2.25L22 6l-2.437-1.25L19.063 3Z" />
+                        </svg>
+                        <span id="right-generate-text" class="sr-only">Generate</span>
                     </button>
-                    <button
-                        id="right-generate-play-btn"
-                        class="px-4 py-2 rounded text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                        <span id="right-generate-play-text">Generate & Play</span>
+                    <button id="right-generate-play-btn" class="w-10 h-10 p-2 rounded text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center" aria-label="Generate and Play" title="Generate and Play">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 5.653 12 6.347-12 6.347V5.653Z" />
+                        </svg>
+                        <span id="right-generate-play-text" class="sr-only">Generate & Play</span>
                     </button>
                 </div>
 
@@ -152,7 +157,12 @@
                     <h3 class="text-base font-semibold mb-2">Generated Audio (Panel 2)</h3>
                     <audio id="right-audio" controls class="w-full"></audio>
                     <div class="mt-2">
-                        <a id="right-download-link" class="text-blue-600 text-sm hover:underline">Download</a>
+                        <a id="right-download-link" class="inline-flex items-center text-blue-600 text-sm hover:underline" aria-label="Download" title="Download">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M7.5 12l4.5 4.5L16.5 12M12 3v13.5"/>
+                            </svg>
+                            <span class="sr-only">Download</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -160,11 +170,12 @@
 
         <!-- Generate both (sequential) -->
         <div class="bg-white p-4 rounded-lg shadow">
-            <button
-                id="generate-both-btn"
-                class="w-full px-4 py-2 rounded text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-                Generate Both (Sequential)
+            <button id="generate-both-btn" class="w-10 h-10 p-2 rounded text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center" aria-label="Generate Both (Sequential)" title="Generate Both (Sequential)">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9v6l4.5-3-4.5-3Z"/>
+                </svg>
+                <span class="sr-only">Generate Both (Sequential)</span>
             </button>
             <p class="text-xs text-gray-500 mt-2">
                 Note: generation runs sequentially to avoid concurrent model use.
@@ -174,7 +185,12 @@
                 <h3 class="text-base font-semibold mb-2">Combined Audio (Panel 1 + Panel 2)</h3>
                 <audio id="combined-audio" controls class="w-full"></audio>
                 <div class="mt-2">
-                    <a id="combined-download-link" class="text-blue-600 text-sm hover:underline">Download Combined</a>
+                    <a id="combined-download-link" class="inline-flex items-center text-blue-600 text-sm hover:underline" aria-label="Download Combined" title="Download Combined">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M7.5 12l4.5 4.5L16.5 12M12 3v13.5"/>
+                        </svg>
+                        <span class="sr-only">Download Combined</span>
+                    </a>
                 </div>
             </div>
         </div>
