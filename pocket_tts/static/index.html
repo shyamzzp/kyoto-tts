@@ -230,6 +230,8 @@
             return new Blob(mp3Data, { type: 'audio/mpeg' });
         }
 
+        const PREDEFINED_VOICES = ["alba","marius","javert","jean","fantine","cosette","eponine","azelma"];
+
         // Cards logic
         const cardsEl = $('cards');
         const addCardBtn = $('add-card-btn');
@@ -263,8 +265,25 @@
                 </svg>`;
             const titleText = document.createElement('span');
             titleText.textContent = `Segment ${indexLabel}`;
-            title.appendChild(drag);
-            title.appendChild(titleText);
+title.appendChild(drag);
+title.appendChild(titleText);
+// Inline voice select beside segment title
+const voiceSelect = document.createElement('select');
+voiceSelect.id = `voice-select-${id}`;
+voiceSelect.className = 'border rounded p-1 text-sm ml-2';
+voiceSelect.setAttribute('aria-label', 'Select voice for this segment');
+voiceSelect.title = 'Select voice for this segment';
+const optShared = document.createElement('option');
+optShared.value = '';
+optShared.textContent = 'Shared (settings)';
+voiceSelect.appendChild(optShared);
+PREDEFINED_VOICES.forEach(v => {
+    const o = document.createElement('option');
+    o.value = v;
+    o.textContent = v;
+    voiceSelect.appendChild(o);
+});
+title.appendChild(voiceSelect);
 
             const actions = document.createElement('div');
             actions.className = 'flex items-center gap-2';
@@ -346,7 +365,7 @@
             wrapper.appendChild(status);
             wrapper.appendChild(audioSection);
 
-            return { wrapper, titleText, downloadA, delBtn, textarea, genBtn, genPlayBtn, status, audioSection };
+            return { wrapper, titleText, downloadA, delBtn, textarea, voiceSelect, genBtn, genPlayBtn, status, audioSection };
         }
 
         function setStatus(panel, message, loading = false) {
@@ -382,10 +401,17 @@
             try {
                 const formData = new FormData();
                 formData.append('text', text);
-                const voiceUrl = $('voice-url-input').value.trim();
-                const voiceWavFile = $('voice-wav-input').files[0];
-                if (voiceWavFile) formData.append('voice_wav', voiceWavFile);
-                else if (voiceUrl) formData.append('voice_url', voiceUrl);
+                const selection = card.voiceSelect ? card.voiceSelect.value : '';
+                if (selection) {
+                    // Per-segment voice overrides shared settings
+                    formData.append('voice_url', selection);
+                } else {
+                    // Use shared settings (WAV has precedence over URL)
+                    const voiceWavFile = $('voice-wav-input').files[0];
+                    const voiceUrl = $('voice-url-input').value.trim();
+                    if (voiceWavFile) formData.append('voice_wav', voiceWavFile);
+                    else if (voiceUrl) formData.append('voice_url', voiceUrl);
+                }
 
                 const response = await fetch('/tts', { method: 'POST', body: formData });
                 if (!response.ok) throw new Error(`Server error: ${response.status}`);
@@ -444,6 +470,7 @@
                 downloadA: el.downloadA,
                 delBtn: el.delBtn,
                 textarea: el.textarea,
+                voiceSelect: el.voiceSelect,
                 genBtn: el.genBtn,
                 genPlayBtn: el.genPlayBtn,
                 status: el.status,
