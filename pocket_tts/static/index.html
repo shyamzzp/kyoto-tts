@@ -286,7 +286,7 @@ PREDEFINED_VOICES.forEach(v => {
 title.appendChild(voiceSelect);
 
             const actions = document.createElement('div');
-            actions.className = 'flex items-center gap-2';
+            actions.className = 'flex items-center gap-2 flex-wrap';
 
             // Per-card download (WAV) icon
             const downloadA = document.createElement('a');
@@ -323,7 +323,7 @@ title.appendChild(voiceSelect);
             controls.className = 'grid grid-cols-2 gap-2';
 
             const genBtn = document.createElement('button');
-            genBtn.className = 'w-10 h-10 p-2 rounded text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center';
+            genBtn.className = 'w-8 h-8 p-1 rounded text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center';
             genBtn.title = 'Generate';
             genBtn.setAttribute('aria-label', 'Generate');
             genBtn.innerHTML = `
@@ -333,7 +333,7 @@ title.appendChild(voiceSelect);
                 <span class="sr-only">Generate</span>`;
 
             const genPlayBtn = document.createElement('button');
-            genPlayBtn.className = 'w-10 h-10 p-2 rounded text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center';
+            genPlayBtn.className = 'w-8 h-8 p-1 rounded text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center';
             genPlayBtn.title = 'Generate and Play';
             genPlayBtn.setAttribute('aria-label', 'Generate and Play');
             genPlayBtn.innerHTML = `
@@ -342,8 +342,8 @@ title.appendChild(voiceSelect);
                 </svg>
                 <span class="sr-only">Generate & Play</span>`;
 
-            controls.appendChild(genBtn);
-            controls.appendChild(genPlayBtn);
+actions.appendChild(genPlayBtn);
+actions.appendChild(genBtn);
 
             const status = document.createElement('div');
             status.className = 'hidden';
@@ -361,7 +361,6 @@ title.appendChild(voiceSelect);
 
             wrapper.appendChild(header);
             wrapper.appendChild(textarea);
-            wrapper.appendChild(controls);
             wrapper.appendChild(status);
             wrapper.appendChild(audioSection);
 
