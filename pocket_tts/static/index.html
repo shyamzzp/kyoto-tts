@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pocket TTS</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.0/lame.min.js"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .drag-handle { cursor: grab; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -16,7 +19,7 @@
             <div class="flex items-center space-x-2">
                 <span class="text-lg font-semibold">Pocket TTS</span>
             </div>
-            <button id="open-settings" class="p-2 rounded hover:bg-gray-100" aria-label="Open settings">
+            <button id="open-settings" class="p-2 rounded hover:bg-gray-100" aria-label="Open settings" title="Open settings">
                 <!-- Heroicons Cog -->
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.764-.383.93-.78.164-.398.142-.854-.108-1.204l-.527-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z" />
@@ -31,7 +34,7 @@
     <aside id="settings-drawer" class="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-xl transform translate-x-full transition-transform z-40">
         <div class="flex items-center justify-between px-4 py-3 border-b">
             <h2 class="text-lg font-semibold">Settings</h2>
-            <button id="close-settings" class="p-2 rounded hover:bg-gray-100" aria-label="Close settings">
+            <button id="close-settings" class="p-2 rounded hover:bg-gray-100" aria-label="Close settings" title="Close settings">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                 </svg>
@@ -39,7 +42,7 @@
         </div>
         <div class="p-4 space-y-4">
             <div class="bg-white">
-                <p class="text-sm text-gray-700 font-medium mb-3">Shared voice settings (used by both panels)</p>
+                <p class="text-sm text-gray-700 font-medium mb-3">Shared voice settings (used by all segments)</p>
                 <label for="voice-url-input" class="block text-sm font-medium text-gray-700 mb-2">
                     Optional voice URL (leave empty to use default voice):
                 </label>
@@ -73,109 +76,50 @@
 
     <!-- Main Content -->
     <div class="max-w-6xl mx-auto p-4 space-y-4 pt-20">
-        <!-- Panels grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Left Panel -->
-            <div class="bg-white p-4 rounded-lg shadow space-y-3" id="left-panel">
-                <h2 class="text-lg font-semibold">Panel 1</h2>
-                <textarea
-                    id="left-text-input"
-                    class="w-full border rounded p-2"
-                    placeholder="Enter your text here..."
-                    rows="4"
-                >Hello world. I am Kyutai's Pocket TTS. I'm fast enough to run on small CPUs. I hope you'll like me.</textarea>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <button
-                        id="left-generate-btn"
-                        class="px-4 py-2 rounded text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                        <span id="left-generate-text">Generate</span>
-                    </button>
-                    <button
-                        id="left-generate-play-btn"
-                        class="px-4 py-2 rounded text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                        <span id="left-generate-play-text">Generate & Play</span>
-                    </button>
-                </div>
-
-                <div id="left-status" class="hidden">
-                    <div class="flex items-center space-x-2">
-                        <div id="left-status-spinner" class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                        <span id="left-status-text"></span>
-                    </div>
-                </div>
-
-                <div id="left-audio-section" class="hidden">
-                    <h3 class="text-base font-semibold mb-2">Generated Audio (Panel 1)</h3>
-                    <audio id="left-audio" controls class="w-full"></audio>
-                    <div class="mt-2">
-                        <a id="left-download-link" class="text-blue-600 text-sm hover:underline">Download</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Panel -->
-            <div class="bg-white p-4 rounded-lg shadow space-y-3" id="right-panel">
-                <h2 class="text-lg font-semibold">Panel 2</h2>
-                <textarea
-                    id="right-text-input"
-                    class="w-full border rounded p-2"
-                    placeholder="Enter your text here..."
-                    rows="4"
-                >This is the second panel. You can enter different text here and generate another audio.</textarea>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <button
-                        id="right-generate-btn"
-                        class="px-4 py-2 rounded text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                        <span id="right-generate-text">Generate</span>
-                    </button>
-                    <button
-                        id="right-generate-play-btn"
-                        class="px-4 py-2 rounded text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                        <span id="right-generate-play-text">Generate & Play</span>
-                    </button>
-                </div>
-
-                <div id="right-status" class="hidden">
-                    <div class="flex items-center space-x-2">
-                        <div id="right-status-spinner" class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                        <span id="right-status-text"></span>
-                    </div>
-                </div>
-
-                <div id="right-audio-section" class="hidden">
-                    <h3 class="text-base font-semibold mb-2">Generated Audio (Panel 2)</h3>
-                    <audio id="right-audio" controls class="w-full"></audio>
-                    <div class="mt-2">
-                        <a id="right-download-link" class="text-blue-600 text-sm hover:underline">Download</a>
-                    </div>
-                </div>
+        <div class="flex items-center justify-between">
+            <h1 class="text-xl font-semibold">Segments</h1>
+            <div class="flex items-center gap-2">
+                <button id="add-card-btn" class="inline-flex items-center gap-1 px-3 py-2 rounded text-white bg-blue-600 hover:bg-blue-700" aria-label="Add segment" title="Add segment">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6"/>
+                    </svg>
+                    <span>Add segment</span>
+                </button>
             </div>
         </div>
 
-        <!-- Generate both (sequential) -->
+        <!-- Cards container -->
+        <div id="cards" class="space-y-3"></div>
+
+        <!-- Combined controls -->
         <div class="bg-white p-4 rounded-lg shadow">
-            <button
-                id="generate-both-btn"
-                class="w-full px-4 py-2 rounded text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-                Generate Both (Sequential)
-            </button>
-            <p class="text-xs text-gray-500 mt-2">
-                Note: generation runs sequentially to avoid concurrent model use.
-            </p>
+            <div class="flex items-center gap-2">
+                <button id="generate-combined-btn" class="w-10 h-10 p-2 rounded text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center" aria-label="Generate Combined (MP3)" title="Generate Combined (MP3)">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9v6l4.5-3-4.5-3Z"/>
+                    </svg>
+                    <span class="sr-only">Generate Combined (MP3)</span>
+                </button>
+                <p class="text-xs text-gray-500">Generation runs sequentially in card order.</p>
+            </div>
 
             <div id="combined-audio-section" class="hidden mt-4">
-                <h3 class="text-base font-semibold mb-2">Combined Audio (Panel 1 + Panel 2)</h3>
-                <audio id="combined-audio" controls class="w-full"></audio>
-                <div class="mt-2">
-                    <a id="combined-download-link" class="text-blue-600 text-sm hover:underline">Download Combined</a>
+                <div class="flex items-center justify-between">
+                    <h3 class="text-base font-semibold flex items-center gap-2">Combined Audio
+                        <span class="text-xs text-gray-500 font-normal">(MP3)</span>
+                    </h3>
+                    <!-- Title and icons on the same line -->
+                    <div class="flex items-center gap-2">
+                        <a id="combined-download-link" class="inline-flex items-center text-blue-600 text-sm hover:underline" aria-label="Download Combined" title="Download Combined MP3">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M7.5 12l4.5 4.5L16.5 12M12 3v13.5"/>
+                            </svg>
+                            <span class="sr-only">Download Combined</span>
+                        </a>
+                    </div>
                 </div>
+                <audio id="combined-audio" controls class="w-full"></audio>
             </div>
         </div>
     </div>
@@ -201,43 +145,7 @@
         closeSettingsBtn.addEventListener('click', closeSettings);
         settingsOverlay.addEventListener('click', closeSettings);
 
-        // Panel helper
-        function getPanelRefs(prefix) {
-            return {
-                textInput: $(`${prefix}-text-input`),
-                generateBtn: $(`${prefix}-generate-btn`),
-                generateText: $(`${prefix}-generate-text`),
-                generatePlayBtn: $(`${prefix}-generate-play-btn`),
-                generatePlayText: $(`${prefix}-generate-play-text`),
-                status: $(`${prefix}-status`),
-                statusText: $(`${prefix}-status-text`),
-                statusSpinner: $(`${prefix}-status-spinner`),
-                audioSection: $(`${prefix}-audio-section`),
-                audio: $(`${prefix}-audio`),
-                downloadLink: $(`${prefix}-download-link`),
-                currentAudioBlob: null,
-            };
-        }
-
-        const left = getPanelRefs('left');
-        const right = getPanelRefs('right');
-        const generateBothBtn = $('generate-both-btn');
-        const combinedAudioSection = $('combined-audio-section');
-        const combinedAudio = $('combined-audio');
-        const combinedDownloadLink = $('combined-download-link');
-
-        function showStatus(panel, message, isLoading = false) {
-            panel.statusText.textContent = message;
-            panel.statusSpinner.style.display = isLoading ? 'block' : 'none';
-            panel.status.classList.remove('hidden');
-        }
-        function hideStatus(panel) { panel.status.classList.add('hidden'); }
-
-        function setAllDisabled(disabled) {
-            [left.generateBtn, left.generatePlayBtn, right.generateBtn, right.generatePlayBtn, generateBothBtn]
-                .forEach(btn => { if (btn) btn.disabled = disabled; });
-        }
-
+        // Utility: WAV parsing and building
         async function parseWavBlob(blob) {
             const buf = await blob.arrayBuffer();
             if (buf.byteLength < 44) throw new Error('Invalid WAV (too short)');
@@ -251,7 +159,6 @@
             const pcmBytes = new Uint8Array(buf, 44);
             return { numChannels, sampleRate, bitsPerSample, pcmBytes };
         }
-
         function buildWavBlobFromPcm(pcmBytes, sampleRate, numChannels, bitsPerSample = 16) {
             const blockAlign = numChannels * (bitsPerSample / 8);
             const byteRate = sampleRate * blockAlign;
@@ -259,14 +166,13 @@
             const header = new ArrayBuffer(44);
             const dv = new DataView(header);
             const u8 = new Uint8Array(header);
-            const writeStr = (offset, str) => { for (let i = 0; i < str.length; i++) u8[offset + i] = str.charCodeAt(i); };
-
+            const writeStr = (o, s) => { for (let i = 0; i < s.length; i++) u8[o + i] = s.charCodeAt(i); };
             writeStr(0, 'RIFF');
             dv.setUint32(4, 36 + dataSize, true);
             writeStr(8, 'WAVE');
             writeStr(12, 'fmt ');
-            dv.setUint32(16, 16, true); // Subchunk1Size for PCM
-            dv.setUint16(20, 1, true);  // AudioFormat PCM
+            dv.setUint32(16, 16, true);
+            dv.setUint16(20, 1, true);
             dv.setUint16(22, numChannels, true);
             dv.setUint32(24, sampleRate, true);
             dv.setUint32(28, byteRate, true);
@@ -274,122 +180,393 @@
             dv.setUint16(34, bitsPerSample, true);
             writeStr(36, 'data');
             dv.setUint32(40, dataSize, true);
-
             return new Blob([header, pcmBytes], { type: 'audio/wav' });
         }
 
-        async function generate(panel, label, autoPlay = false) {
-            const text = panel.textInput.value.trim();
-            if (!text) {
-                showStatus(panel, 'Please enter some text to generate speech.', false);
-                setTimeout(() => hideStatus(panel), 3000);
-                return;
+        // MP3 encoding via lamejs
+        function int16FromPCMBytesLE(pcmBytes) {
+            const len = pcmBytes.length / 2;
+            const out = new Int16Array(len);
+            for (let i = 0, j = 0; i < len; i++, j += 2) {
+                out[i] = (pcmBytes[j] | (pcmBytes[j + 1] << 8)) << 0; // little-endian
+            }
+            return out;
+        }
+        function encodeMp3FromPcm(pcmBytes, sampleRate, numChannels) {
+            const kbps = 128;
+            const encoder = new lamejs.Mp3Encoder(numChannels, sampleRate, kbps);
+            let mp3Data = [];
+
+            if (numChannels === 1) {
+                const samples = int16FromPCMBytesLE(pcmBytes);
+                const chunkSize = 1152 * 10; // process in chunks
+                for (let i = 0; i < samples.length; i += chunkSize) {
+                    const chunk = samples.subarray(i, Math.min(i + chunkSize, samples.length));
+                    const mp3buf = encoder.encodeBuffer(chunk);
+                    if (mp3buf.length > 0) mp3Data.push(new Int8Array(mp3buf));
+                }
+            } else if (numChannels === 2) {
+                // De-interleave
+                const samples = int16FromPCMBytesLE(pcmBytes);
+                const left = new Int16Array(samples.length / 2);
+                const right = new Int16Array(samples.length / 2);
+                for (let i = 0, j = 0; j < samples.length; i++, j += 2) {
+                    left[i] = samples[j];
+                    right[i] = samples[j + 1];
+                }
+                const chunkSize = 1152 * 10;
+                for (let i = 0; i < left.length; i += chunkSize) {
+                    const l = left.subarray(i, Math.min(i + chunkSize, left.length));
+                    const r = right.subarray(i, Math.min(i + chunkSize, right.length));
+                    const mp3buf = encoder.encodeBuffer(l, r);
+                    if (mp3buf.length > 0) mp3Data.push(new Int8Array(mp3buf));
+                }
+            } else {
+                throw new Error('Unsupported number of channels: ' + numChannels);
             }
 
-            // Update UI
-            panel.generateBtn.disabled = true;
-            panel.generatePlayBtn.disabled = true;
-            const originalBtnText = panel.generateText.textContent;
-            const originalPlayBtnText = panel.generatePlayText.textContent;
-            panel.generateText.textContent = 'Generating...';
-            panel.generatePlayText.textContent = 'Generating...';
-            showStatus(panel, 'Generating speech...', true);
-            panel.audioSection.classList.add('hidden');
-            setAllDisabled(true); // lock other actions while generating
+            const end = encoder.flush();
+            if (end.length > 0) mp3Data.push(new Int8Array(end));
+            return new Blob(mp3Data, { type: 'audio/mpeg' });
+        }
+
+        const PREDEFINED_VOICES = ["alba","marius","javert","jean","fantine","cosette","eponine","azelma"];
+
+        // Cards logic
+        const cardsEl = $('cards');
+        const addCardBtn = $('add-card-btn');
+        const generateCombinedBtn = $('generate-combined-btn');
+        const combinedAudioSection = $('combined-audio-section');
+        const combinedAudio = $('combined-audio');
+        const combinedDownloadLink = $('combined-download-link');
+
+        let cardIdCounter = 0;
+        const cards = new Map(); // id -> card object
+
+        function createCardElement(id, indexLabel) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'bg-white p-4 rounded-lg shadow space-y-3';
+            wrapper.dataset.cardId = String(id);
+
+            // Header with title + inline icons (same line)
+            const header = document.createElement('div');
+            header.className = 'flex items-center justify-between';
+
+            const title = document.createElement('h2');
+            title.className = 'text-lg font-semibold flex items-center gap-2';
+
+            // Drag handle icon
+            const drag = document.createElement('span');
+            drag.className = 'drag-handle text-gray-400 hover:text-gray-600';
+            drag.title = 'Drag to reorder';
+            drag.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h.008v.008H8.25V6.75Zm0 5.25h.008v.008H8.25V12Zm0 5.25h.008v.008H8.25V17.25Zm7.5-10.5h.008v.008h-.008V6.75Zm0 5.25h.008v.008h-.008V12Zm0 5.25h.008v.008h-.008V17.25Z" />
+                </svg>`;
+            const titleText = document.createElement('span');
+            titleText.textContent = `Segment ${indexLabel}`;
+title.appendChild(drag);
+title.appendChild(titleText);
+// Inline voice select beside segment title
+const voiceSelect = document.createElement('select');
+voiceSelect.id = `voice-select-${id}`;
+voiceSelect.className = 'border rounded p-1 text-sm ml-2';
+voiceSelect.setAttribute('aria-label', 'Select voice for this segment');
+voiceSelect.title = 'Select voice for this segment';
+const optShared = document.createElement('option');
+optShared.value = '';
+optShared.textContent = 'Shared (settings)';
+voiceSelect.appendChild(optShared);
+PREDEFINED_VOICES.forEach(v => {
+    const o = document.createElement('option');
+    o.value = v;
+    o.textContent = v;
+    voiceSelect.appendChild(o);
+});
+title.appendChild(voiceSelect);
+
+            const actions = document.createElement('div');
+            actions.className = 'flex items-center gap-2 flex-wrap';
+
+            // Per-card download (WAV) icon
+            const downloadA = document.createElement('a');
+            downloadA.className = 'inline-flex items-center text-blue-600 text-sm hover:underline';
+            downloadA.title = 'Download WAV';
+            downloadA.setAttribute('aria-label', 'Download WAV');
+            downloadA.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M7.5 12l4.5 4.5L16.5 12M12 3v13.5"/>
+                </svg>`;
+            actions.appendChild(downloadA);
+
+            // Delete icon
+            const delBtn = document.createElement('button');
+            delBtn.className = 'p-1 rounded hover:bg-gray-100';
+            delBtn.title = 'Delete segment';
+            delBtn.setAttribute('aria-label', 'Delete segment');
+            delBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-red-600">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.108 1.022.169m-1.022-.17L18.16 19.673A2.25 2.25 0 0 1 15.916 21.75H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.061.68-.117 1.022-.169m0 0L6.16 19.673A2.25 2.25 0 0 0 8.404 21.75h7.512a2.25 2.25 0 0 0 2.244-2.077L19.228 5.79m-12-.562a48.11 48.11 0 0 1 3.478-.397m4.5 0c1.18.105 2.357.24 3.478.397" />
+                </svg>`;
+            actions.appendChild(delBtn);
+
+            header.appendChild(title);
+            header.appendChild(actions);
+
+            // Body
+            const textarea = document.createElement('textarea');
+            textarea.className = 'w-full border rounded p-2';
+            textarea.rows = 4;
+            textarea.placeholder = 'Enter your text here...';
+
+            const controls = document.createElement('div');
+            controls.className = 'grid grid-cols-2 gap-2';
+
+            const genBtn = document.createElement('button');
+            genBtn.className = 'w-8 h-8 p-1 rounded text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center';
+            genBtn.title = 'Generate';
+            genBtn.setAttribute('aria-label', 'Generate');
+            genBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 21l-2.813-5.096L1 13l5.188-.904L9 7l2.813 5.096L17 13l-7.187 2.904Zm9.187-7.904.563 2.25L22 6l-2.437-.75L18.999 3l-.563 2.25L16 6l2.436 1.25.564 2.25.563-2.25L22 6l-2.437-1.25L19.063 3Z" />
+                </svg>
+                <span class="sr-only">Generate</span>`;
+
+            const genPlayBtn = document.createElement('button');
+            genPlayBtn.className = 'w-8 h-8 p-1 rounded text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center';
+            genPlayBtn.title = 'Generate and Play';
+            genPlayBtn.setAttribute('aria-label', 'Generate and Play');
+            genPlayBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m5.25 5.653 12 6.347-12 6.347V5.653Z" />
+                </svg>
+                <span class="sr-only">Generate & Play</span>`;
+
+actions.appendChild(genPlayBtn);
+actions.appendChild(genBtn);
+
+            const status = document.createElement('div');
+            status.className = 'hidden';
+            status.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span class="status-text"></span>
+                </div>`;
+
+            const audioSection = document.createElement('div');
+            audioSection.className = 'hidden';
+            audioSection.innerHTML = `
+                <h3 class="text-base font-semibold mb-2">Generated Audio</h3>
+                <audio controls class="w-full"></audio>`;
+
+            wrapper.appendChild(header);
+            wrapper.appendChild(textarea);
+            wrapper.appendChild(status);
+            wrapper.appendChild(audioSection);
+
+            return { wrapper, titleText, downloadA, delBtn, textarea, voiceSelect, genBtn, genPlayBtn, status, audioSection };
+        }
+
+        function setStatus(panel, message, loading = false) {
+            const spinner = panel.status.querySelector('div');
+            const text = panel.status.querySelector('.status-text');
+            text.textContent = message;
+            spinner.style.display = loading ? 'block' : 'none';
+            panel.status.classList.remove('hidden');
+        }
+        function hideStatus(panel) { panel.status.classList.add('hidden'); }
+
+        function setAllDisabled(disabled) {
+            // Disable all generate buttons and the combined button
+            cards.forEach(c => { c.genBtn.disabled = disabled; c.genPlayBtn.disabled = disabled; });
+            generateCombinedBtn.disabled = disabled;
+        }
+
+        async function generateForCard(card, autoPlay = false) {
+            const text = card.textarea.value.trim();
+            if (!text) {
+                setStatus(card, 'Please enter some text to generate speech.', false);
+                setTimeout(() => hideStatus(card), 3000);
+                return null;
+            }
+
+            card.genBtn.disabled = true;
+            card.genPlayBtn.disabled = true;
+            setAllDisabled(true);
+            setStatus(card, 'Generating speech...', true);
+            card.audioSection.classList.add('hidden');
 
             const startTime = performance.now();
             try {
                 const formData = new FormData();
                 formData.append('text', text);
-
-                // Shared voice controls (from sidebar)
-                const voiceUrl = $('voice-url-input').value.trim();
-                const voiceWavFile = $('voice-wav-input').files[0];
-                if (voiceWavFile) {
-                    formData.append('voice_wav', voiceWavFile);
-                } else if (voiceUrl) {
-                    formData.append('voice_url', voiceUrl);
+                const selection = card.voiceSelect ? card.voiceSelect.value : '';
+                if (selection) {
+                    // Per-segment voice overrides shared settings
+                    formData.append('voice_url', selection);
+                } else {
+                    // Use shared settings (WAV has precedence over URL)
+                    const voiceWavFile = $('voice-wav-input').files[0];
+                    const voiceUrl = $('voice-url-input').value.trim();
+                    if (voiceWavFile) formData.append('voice_wav', voiceWavFile);
+                    else if (voiceUrl) formData.append('voice_url', voiceUrl);
                 }
 
                 const response = await fetch('/tts', { method: 'POST', body: formData });
                 if (!response.ok) throw new Error(`Server error: ${response.status}`);
-
                 const blob = await response.blob();
-                const totalTime = ((performance.now() - startTime) / 1000).toFixed(2);
-                panel.currentAudioBlob = blob;
+                card.currentBlob = blob;
 
                 const audioUrl = URL.createObjectURL(blob);
-                panel.audio.src = audioUrl;
-                panel.audioSection.classList.remove('hidden');
+                const audio = card.audioSection.querySelector('audio');
+                audio.src = audioUrl;
+                card.audioSection.classList.remove('hidden');
 
-                panel.audio.addEventListener('loadedmetadata', async () => {
-                    const audioDuration = panel.audio.duration;
+                audio.addEventListener('loadedmetadata', async () => {
+                    const totalTime = ((performance.now() - startTime) / 1000).toFixed(2);
+                    const audioDuration = audio.duration;
                     const speedRatio = (audioDuration / parseFloat(totalTime)).toFixed(1);
-                    showStatus(panel, `Total: ${totalTime}s | ${speedRatio}x faster than real-time`, false);
+                    setStatus(card, `Total: ${totalTime}s | ${speedRatio}x faster than real-time`, false);
                     if (autoPlay) {
-                        try { await panel.audio.play(); } catch (e) { console.warn('Autoplay blocked:', e); }
+                        try { await audio.play(); } catch (e) { console.warn('Autoplay blocked:', e); }
                     }
                 }, { once: true });
 
-                panel.downloadLink.href = audioUrl;
-                panel.downloadLink.download = `${label}-tts-audio.wav`;
+                card.downloadA.href = audioUrl;
+                card.downloadA.download = `segment-${card.index}-tts.wav`;
                 return blob;
-            } catch (error) {
-                console.error('Error generating audio:', error);
-                showStatus(panel, `Error: ${error.message}`, false);
-                setTimeout(() => hideStatus(panel), 3000);
+            } catch (e) {
+                console.error(e);
+                setStatus(card, `Error: ${e.message}`, false);
+                setTimeout(() => hideStatus(card), 4000);
+                return null;
             } finally {
-                panel.generateBtn.disabled = false;
-                panel.generatePlayBtn.disabled = false;
-                panel.generateText.textContent = originalBtnText;
-                panel.generatePlayText.textContent = originalPlayBtnText;
+                card.genBtn.disabled = false;
+                card.genPlayBtn.disabled = false;
                 setAllDisabled(false);
             }
         }
 
-        // Event listeners
-        left.generateBtn.addEventListener('click', () => generate(left, 'panel1', false));
-        left.generatePlayBtn.addEventListener('click', () => generate(left, 'panel1', true));
-        right.generateBtn.addEventListener('click', () => generate(right, 'panel2', false));
-        right.generatePlayBtn.addEventListener('click', () => generate(right, 'panel2', true));
-        generateBothBtn.addEventListener('click', async () => {
+        function renumberCards() {
+            let idx = 1;
+            cards.forEach(card => {
+                card.index = idx;
+                card.titleText.textContent = `Segment ${idx}`;
+                idx += 1;
+            });
+        }
+
+        function addCard(defaultText = '') {
+            const id = ++cardIdCounter;
+            const el = createCardElement(id, cards.size + 1);
+            cardsEl.appendChild(el.wrapper);
+
+            const card = {
+                id,
+                index: cards.size + 1,
+                wrapper: el.wrapper,
+                titleText: el.titleText,
+                downloadA: el.downloadA,
+                delBtn: el.delBtn,
+                textarea: el.textarea,
+                voiceSelect: el.voiceSelect,
+                genBtn: el.genBtn,
+                genPlayBtn: el.genPlayBtn,
+                status: el.status,
+                audioSection: el.audioSection,
+                currentBlob: null,
+            };
+            if (defaultText) card.textarea.value = defaultText;
+
+            // Bind actions
+            card.genBtn.addEventListener('click', () => generateForCard(card, false));
+            card.genPlayBtn.addEventListener('click', () => generateForCard(card, true));
+            card.delBtn.addEventListener('click', () => {
+                cards.delete(id);
+                card.wrapper.remove();
+                renumberCards();
+            });
+
+            cards.set(id, card);
+            renumberCards();
+            return card;
+        }
+
+        // Initialize with two example cards
+        addCard("Hello world. I am Kyutai's Pocket TTS. I'm fast enough to run on small CPUs. I hope you'll like me.");
+        addCard('This is the second segment. You can enter different text here and generate another audio.');
+
+        addCardBtn.addEventListener('click', () => addCard());
+
+        // Sortable: drag to reorder; maintain title index updates
+        new Sortable(cardsEl, {
+            handle: '.drag-handle',
+            animation: 150,
+            onEnd: () => {
+                // Rebuild Map in DOM order
+                const newOrder = new Map();
+                cardsEl.querySelectorAll('[data-card-id]').forEach(node => {
+                    const id = Number(node.dataset.cardId);
+                    const c = cards.get(id);
+                    if (c) newOrder.set(id, c);
+                });
+                cards.clear();
+                newOrder.forEach((v, k) => cards.set(k, v));
+                renumberCards();
+            },
+        });
+
+        generateCombinedBtn.addEventListener('click', async () => {
+            // Sequentially generate in current order and build combined MP3
+            const order = Array.from(cards.values());
+            if (order.length === 0) return;
+
             setAllDisabled(true);
+            let baseSampleRate = null;
+            let baseChannels = null;
+            const pcmChunks = [];
+
             try {
-                const leftBlob = await generate(left, 'panel1', false);
-                const rightBlob = await generate(right, 'panel2', false);
-                if (!leftBlob || !rightBlob) return;
-
-                const leftWav = await parseWavBlob(leftBlob);
-                const rightWav = await parseWavBlob(rightBlob);
-
-                if (leftWav.sampleRate !== rightWav.sampleRate || leftWav.numChannels !== rightWav.numChannels) {
-                    console.warn('Mismatched WAV formats; cannot combine.');
-                    return;
+                for (const card of order) {
+                    const blob = card.currentBlob || (await generateForCard(card, false));
+                    if (!blob) { setAllDisabled(false); return; }
+                    const wav = await parseWavBlob(blob);
+                    if (baseSampleRate === null) {
+                        baseSampleRate = wav.sampleRate; baseChannels = wav.numChannels;
+                    } else if (wav.sampleRate !== baseSampleRate || wav.numChannels !== baseChannels) {
+                        setStatus(card, 'Format mismatch with other segments; cannot combine.', false);
+                        setAllDisabled(false);
+                        return;
+                    }
+                    pcmChunks.push(wav.pcmBytes);
                 }
 
-                const combinedPcm = new Uint8Array(leftWav.pcmBytes.length + rightWav.pcmBytes.length);
-                combinedPcm.set(leftWav.pcmBytes, 0);
-                combinedPcm.set(rightWav.pcmBytes, leftWav.pcmBytes.length);
+                // Concatenate PCM
+                const totalLen = pcmChunks.reduce((acc, c) => acc + c.length, 0);
+                const combinedPcm = new Uint8Array(totalLen);
+                let offset = 0;
+                for (const c of pcmChunks) { combinedPcm.set(c, offset); offset += c.length; }
 
-                const combinedBlob = buildWavBlobFromPcm(
-                    combinedPcm,
-                    leftWav.sampleRate,
-                    leftWav.numChannels,
-                    leftWav.bitsPerSample
-                );
-
-                const url = URL.createObjectURL(combinedBlob);
+                // Encode to MP3
+                const mp3Blob = encodeMp3FromPcm(combinedPcm, baseSampleRate, baseChannels);
+                const url = URL.createObjectURL(mp3Blob);
                 combinedAudio.src = url;
                 combinedDownloadLink.href = url;
-                combinedDownloadLink.download = 'combined-tts-audio.wav';
+                combinedDownloadLink.download = 'combined-tts-audio.mp3';
                 combinedAudioSection.classList.remove('hidden');
+            } catch (e) {
+                console.error('Combine error', e);
+                alert('Failed to combine to MP3: ' + e.message);
             } finally {
                 setAllDisabled(false);
             }
         });
 
-        // Focus on left text input when page loads
-        window.addEventListener('load', () => { left.textInput.focus(); });
+        // Focus first card on load
+        window.addEventListener('load', () => {
+            const first = cardsEl.querySelector('textarea');
+            if (first) first.focus();
+        });
     </script>
 </body>
 </html>
