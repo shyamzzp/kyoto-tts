@@ -169,6 +169,42 @@
         </div>
     </div>
 
+    <!-- Shortcuts Help Overlay -->
+    <div id="shortcuts-overlay" class="fixed inset-0 bg-black/40 hidden z-50" aria-hidden="true">
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-auto p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold">Keyboard Shortcuts</h2>
+                    <button id="close-shortcuts" class="p-2 rounded hover:bg-gray-100" aria-label="Close shortcuts" title="Close shortcuts (Esc)">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="text-sm text-gray-700 space-y-2">
+                    <p class="text-gray-600">Use Ctrl on Windows/Linux or Cmd on macOS.</p>
+                    <ul class="list-disc pl-5 space-y-1">
+                        <li><strong>Settings</strong>: Ctrl/Cmd+, (open), Esc (close)</li>
+                        <li><strong>Add segment</strong>: Ctrl/Cmd+N</li>
+                        <li><strong>Generate combined</strong>: Ctrl/Cmd+Shift+G</li>
+                        <li><strong>Download combined</strong>: Ctrl/Cmd+Shift+D</li>
+                        <li><strong>Show/hide this help</strong>: Ctrl/Cmd+/</li>
+                        <li><strong>Focus previous/next segment</strong>: Ctrl/Cmd+ArrowUp/ArrowDown</li>
+                        <li><strong>Reorder segment</strong>: Alt+ArrowUp/ArrowDown</li>
+                        <li><strong>Per-segment</strong> (when focused):</li>
+                        <ul class="list-[circle] pl-5">
+                            <li>Generate: Ctrl/Cmd+Enter</li>
+                            <li>Generate & Play: Ctrl/Cmd+Shift+Enter</li>
+                            <li>Delete: Ctrl/Cmd+Backspace</li>
+                            <li>Download WAV: Ctrl/Cmd+Shift+D</li>
+                            <li>Focus voice select: Ctrl/Cmd+Shift+V</li>
+                        </ul>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function $(id) { return document.getElementById(id); }
 
@@ -177,6 +213,12 @@
         const closeSettingsBtn = $('close-settings');
         const settingsOverlay = $('settings-overlay');
         const settingsDrawer = $('settings-drawer');
+
+        // Shortcut metadata for settings buttons
+        openSettingsBtn.setAttribute('aria-keyshortcuts', 'Control+Comma Meta+Comma');
+        openSettingsBtn.title = 'Open settings (Ctrl/Cmd+,)';
+        closeSettingsBtn.setAttribute('aria-keyshortcuts', 'Escape');
+        closeSettingsBtn.title = 'Close settings (Esc)';
 
         function openSettings() {
             settingsOverlay.classList.remove('hidden');
@@ -285,6 +327,14 @@
         const combinedAudio = $('combined-audio');
         const combinedDownloadLink = $('combined-download-link');
 
+        // Shortcut metadata for global controls
+        addCardBtn.setAttribute('aria-keyshortcuts', 'Control+N Meta+N');
+        addCardBtn.title = 'Add segment (Ctrl/Cmd+N)';
+        generateCombinedBtn.setAttribute('aria-keyshortcuts', 'Control+Shift+G Meta+Shift+G');
+        generateCombinedBtn.title = 'Generate Combined (MP3) (Ctrl/Cmd+Shift+G)';
+        combinedDownloadLink.setAttribute('aria-keyshortcuts', 'Control+Shift+D Meta+Shift+D');
+        combinedDownloadLink.title = 'Download Combined MP3 (Ctrl/Cmd+Shift+D)';
+
         let cardIdCounter = 0;
         const cards = new Map(); // id -> card object
 
@@ -310,25 +360,27 @@
                 </svg>`;
             const titleText = document.createElement('span');
             titleText.textContent = `Segment ${indexLabel}`;
-title.appendChild(drag);
-title.appendChild(titleText);
-// Inline voice select beside segment title
-const voiceSelect = document.createElement('select');
-voiceSelect.id = `voice-select-${id}`;
-voiceSelect.className = 'border rounded p-1 text-sm ml-2';
-voiceSelect.setAttribute('aria-label', 'Select voice for this segment');
-voiceSelect.title = 'Select voice for this segment';
-const optShared = document.createElement('option');
-optShared.value = '';
-optShared.textContent = 'Shared (settings)';
-voiceSelect.appendChild(optShared);
-PREDEFINED_VOICES.forEach(v => {
-    const o = document.createElement('option');
-    o.value = v;
-    o.textContent = v;
-    voiceSelect.appendChild(o);
-});
-title.appendChild(voiceSelect);
+            title.appendChild(drag);
+            title.appendChild(titleText);
+            // Inline voice select beside segment title
+            const voiceSelect = document.createElement('select');
+            voiceSelect.id = `voice-select-${id}`;
+            voiceSelect.className = 'border rounded p-1 text-sm ml-2';
+            voiceSelect.setAttribute('aria-label', 'Select voice for this segment');
+            voiceSelect.title = 'Select voice for this segment';
+            const optShared = document.createElement('option');
+            optShared.value = '';
+            optShared.textContent = 'Shared (settings)';
+            voiceSelect.appendChild(optShared);
+            PREDEFINED_VOICES.forEach(v => {
+                const o = document.createElement('option');
+                o.value = v;
+                o.textContent = v;
+                voiceSelect.appendChild(o);
+            });
+            voiceSelect.setAttribute('aria-keyshortcuts', 'Control+Shift+V Meta+Shift+V');
+            voiceSelect.title = 'Select voice for this segment (Ctrl/Cmd+Shift+V)';
+            title.appendChild(voiceSelect);
 
             const actions = document.createElement('div');
             actions.className = 'flex items-center gap-2 flex-wrap';
@@ -342,6 +394,8 @@ title.appendChild(voiceSelect);
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M7.5 12l4.5 4.5L16.5 12M12 3v13.5"/>
                 </svg>`;
+            downloadA.setAttribute('aria-keyshortcuts', 'Control+Shift+D Meta+Shift+D');
+            downloadA.title = 'Download WAV (Ctrl/Cmd+Shift+D)';
             actions.appendChild(downloadA);
 
             // Delete icon
@@ -353,6 +407,8 @@ title.appendChild(voiceSelect);
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-red-600">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.108 1.022.169m-1.022-.17L18.16 19.673A2.25 2.25 0 0 1 15.916 21.75H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.061.68-.117 1.022-.169m0 0L6.16 19.673A2.25 2.25 0 0 0 8.404 21.75h7.512a2.25 2.25 0 0 0 2.244-2.077L19.228 5.79m-12-.562a48.11 48.11 0 0 1 3.478-.397m4.5 0c1.18.105 2.357.24 3.478.397" />
                 </svg>`;
+            delBtn.setAttribute('aria-keyshortcuts', 'Control+Backspace Control+Delete Meta+Backspace Meta+Delete');
+            delBtn.title = 'Delete segment (Ctrl/Cmd+Backspace)';
             actions.appendChild(delBtn);
 
             header.appendChild(title);
@@ -387,8 +443,12 @@ title.appendChild(voiceSelect);
                 </svg>
                 <span class="sr-only">Generate & Play</span>`;
 
-actions.appendChild(genPlayBtn);
-actions.appendChild(genBtn);
+            genBtn.setAttribute('aria-keyshortcuts', 'Control+Enter Meta+Enter');
+            genBtn.title = 'Generate (Ctrl/Cmd+Enter)';
+            genPlayBtn.setAttribute('aria-keyshortcuts', 'Control+Shift+Enter Meta+Shift+Enter');
+            genPlayBtn.title = 'Generate and Play (Ctrl/Cmd+Shift+Enter)';
+            actions.appendChild(genPlayBtn);
+            actions.appendChild(genBtn);
 
             const status = document.createElement('div');
             status.className = 'hidden';
@@ -604,6 +664,144 @@ actions.appendChild(genBtn);
                 alert('Failed to combine to MP3: ' + e.message);
             } finally {
                 setAllDisabled(false);
+            }
+        });
+
+        // Shortcuts overlay controls and keyboard shortcuts
+        const shortcutsOverlay = $('shortcuts-overlay');
+        const closeShortcutsBtn = $('close-shortcuts');
+        function openShortcuts() { shortcutsOverlay.classList.remove('hidden'); shortcutsOverlay.setAttribute('aria-hidden', 'false'); }
+        function closeShortcuts() { shortcutsOverlay.classList.add('hidden'); shortcutsOverlay.setAttribute('aria-hidden', 'true'); }
+        if (closeShortcutsBtn) closeShortcutsBtn.addEventListener('click', closeShortcuts);
+        if (shortcutsOverlay) shortcutsOverlay.addEventListener('click', (e) => { if (e.target === shortcutsOverlay) closeShortcuts(); });
+
+        // Track active card by focus
+        let activeCard = null;
+        document.addEventListener('focusin', (e) => {
+            const wrapper = e.target.closest && e.target.closest('[data-card-id]');
+            if (!wrapper) return;
+            const id = Number(wrapper.dataset.cardId);
+            if (cards.has(id)) activeCard = cards.get(id);
+        });
+
+        function getCardsArray() { return Array.from(cards.values()); }
+
+        function focusRelativeCard(delta) {
+            const arr = getCardsArray();
+            if (arr.length === 0) return;
+            let idx = activeCard ? arr.findIndex(c => c.id === activeCard.id) : 0;
+            if (idx < 0) idx = 0;
+            const next = Math.min(Math.max(idx + delta, 0), arr.length - 1);
+            const target = arr[next];
+            if (target && target.textarea) target.textarea.focus();
+        }
+
+        function rebuildMapFromDom() {
+            const newOrder = new Map();
+            cardsEl.querySelectorAll('[data-card-id]').forEach(node => {
+                const id = Number(node.dataset.cardId);
+                const c = cards.get(id);
+                if (c) newOrder.set(id, c);
+            });
+            cards.clear();
+            newOrder.forEach((v, k) => cards.set(k, v));
+            renumberCards();
+        }
+
+        function moveActiveCard(dir) {
+            if (!activeCard) return;
+            const nodes = Array.from(cardsEl.querySelectorAll('[data-card-id]'));
+            const currentIndex = nodes.findIndex(n => Number(n.dataset.cardId) === activeCard.id);
+            if (currentIndex < 0) return;
+            const newIndex = currentIndex + dir;
+            if (newIndex < 0 || newIndex >= nodes.length) return;
+            const node = nodes[currentIndex];
+            const refNode = dir > 0 ? nodes[newIndex].nextSibling : nodes[newIndex];
+            cardsEl.insertBefore(node, refNode);
+            rebuildMapFromDom();
+            if (activeCard.textarea) activeCard.textarea.focus();
+        }
+
+        // Global keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            const isMac = navigator.platform.toUpperCase().includes('MAC');
+            const primary = isMac ? e.metaKey : e.ctrlKey;
+            const shift = e.shiftKey;
+            const alt = e.altKey;
+            const k = e.key;
+
+            // Close modals on Esc
+            if (k === 'Escape') {
+                let handled = false;
+                if (!settingsOverlay.classList.contains('hidden')) { closeSettings(); handled = true; }
+                if (!shortcutsOverlay.classList.contains('hidden')) { closeShortcuts(); handled = true; }
+                if (handled) { e.preventDefault(); return; }
+            }
+
+            // Cmd/Ctrl + ,
+            if (primary && !shift && !alt && (k === ',')) {
+                e.preventDefault(); openSettings(); return;
+            }
+
+            // Cmd/Ctrl + N
+            if (primary && !shift && !alt && (k === 'n' || k === 'N')) {
+                e.preventDefault(); addCard(); return;
+            }
+
+            // Cmd/Ctrl + Shift + G
+            if (primary && shift && !alt && (k === 'g' || k === 'G')) {
+                e.preventDefault(); generateCombinedBtn.click(); return;
+            }
+
+            // Cmd/Ctrl + Shift + D
+            if (primary && shift && !alt && (k === 'd' || k === 'D')) {
+                e.preventDefault();
+                if (activeCard && activeCard.downloadA && activeCard.downloadA.href) { activeCard.downloadA.click(); return; }
+                if (!combinedAudioSection.classList.contains('hidden')) { combinedDownloadLink.click(); }
+                return;
+            }
+
+            // Cmd/Ctrl + /
+            if (primary && !shift && !alt && (k === '/')) {
+                e.preventDefault();
+                if (shortcutsOverlay.classList.contains('hidden')) openShortcuts(); else closeShortcuts();
+                return;
+            }
+
+            // Cmd/Ctrl + ArrowUp/Down
+            if (primary && !shift && !alt && (k === 'ArrowUp' || k === 'ArrowDown')) {
+                e.preventDefault();
+                focusRelativeCard(k === 'ArrowUp' ? -1 : 1);
+                return;
+            }
+
+            // Alt + ArrowUp/Down
+            if (!primary && !shift && alt && (k === 'ArrowUp' || k === 'ArrowDown')) {
+                e.preventDefault();
+                moveActiveCard(k === 'ArrowUp' ? -1 : 1);
+                return;
+            }
+
+            // Per-card: Cmd/Ctrl + Enter; Cmd/Ctrl + Shift + Enter
+            if (primary && (k === 'Enter')) {
+                e.preventDefault();
+                const play = shift;
+                if (activeCard) generateForCard(activeCard, play);
+                return;
+            }
+
+            // Per-card: Cmd/Ctrl + Backspace/Delete
+            if (primary && !shift && !alt && (k === 'Backspace' || k === 'Delete')) {
+                e.preventDefault();
+                if (activeCard) activeCard.delBtn.click();
+                return;
+            }
+
+            // Per-card: Cmd/Ctrl + Shift + V => focus voice select
+            if (primary && shift && !alt && (k === 'v' || k === 'V')) {
+                e.preventDefault();
+                if (activeCard && activeCard.voiceSelect) activeCard.voiceSelect.focus();
+                return;
             }
         });
 
