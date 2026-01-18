@@ -12,12 +12,17 @@
         .drag-handle { cursor: grab; }
         /* Timeline mixer styles */
         .timeline-bar { position: relative; height: 80px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem; overflow: hidden; }
-        .clip { position: absolute; top: 8px; height: 64px; background: #dbeafe; border: 1px solid #93c5fd; border-radius: 0.375rem; box-sizing: border-box; display: flex; align-items: center; padding: 0 8px; gap: 8px; }
+        .clip { position: absolute; top: 8px; height: 64px; background: #dbeafe; border: 1px solid #93c5fd; border-radius: 0.375rem; box-sizing: border-box; display: flex; align-items: center; padding: 0 8px; gap: 8px; cursor: grab; }
         .clip .label { font-size: 12px; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .handle { position: absolute; top: 0; width: 6px; height: 100%; background: #93c5fd; cursor: ew-resize; }
         .handle-left { left: 0; }
         .handle-right { right: 0; }
-        .clip-content { position: absolute; left: 6px; right: 6px; top: 0; bottom: 0; display: flex; align-items: center; pointer-events: none; }
+        .clip-content { position: absolute; left: 6px; right: 6px; top: 0; bottom: 0; display: flex; align-items: center; pointer-events: auto; cursor: grab; }
+        /* Multi-row timeline additions */
+        .timeline-wrap { position: relative; }
+        .track-headers { user-select: none; }
+        .track-header-row { height: 80px; display: flex; align-items: center; color: #374151; font-size: 12px; border: 1px solid #e5e7eb; border-right: none; border-radius: 0.5rem; background: #f9fafb; padding-left: 8px; margin-bottom: 4px; }
+        .timeline-row { position: absolute; left: 0; right: 0; height: 80px; border-bottom: 1px dashed #e5e7eb; background: linear-gradient(90deg, rgba(0,0,0,0.02) 1px, transparent 1px) 0 0/60px 100%; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -137,12 +142,18 @@
                 <h3 class="text-base font-semibold">Timeline Mixer</h3>
                 <div class="flex items-center gap-2">
                     <input id="music-file-input" type="file" accept="audio/*" class="hidden" />
+                    <button id="add-row-btn" class="px-3 py-2 rounded text-white bg-gray-700 hover:bg-gray-800">Add Row</button>
                     <button id="add-music-btn" class="px-3 py-2 rounded text-white bg-blue-600 hover:bg-blue-700">Add Music</button>
                     <button id="render-mix-btn" class="px-3 py-2 rounded text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed">Render Mix (MP3)</button>
                 </div>
             </div>
             <p class="text-xs text-gray-500 mt-1">Drag clips to set position. Use handles to trim start/end. Units are seconds.</p>
-            <div id="timeline-bar" class="timeline-bar mt-3"></div>
+            <div class="timeline-wrap mt-3 flex">
+                <div id="track-headers" class="track-headers w-32 mr-2 flex-shrink-0"></div>
+                <div id="timeline-scroller" class="flex-1 overflow-x-auto">
+                    <div id="timeline-bar" class="timeline-bar relative"></div>
+                </div>
+            </div>
             <div id="mix-audio-section" class="hidden mt-4">
                 <div class="flex items-center justify-between">
                     <h4 class="text-base font-semibold flex items-center gap-2">Mixed Audio <span class="text-xs text-gray-500 font-normal">(MP3)</span></h4>
@@ -600,7 +611,10 @@ actions.appendChild(genBtn);
         // Timeline Mixer Logic
         // ---------------------------
         const timelineBar = $('timeline-bar');
+        const trackHeaders = $('track-headers');
+        const timelineScroller = $('timeline-scroller');
         const renderMixBtn = $('render-mix-btn');
+        const addRowBtn = $('add-row-btn');
         const addMusicBtn = $('add-music-btn');
         const musicFileInput = $('music-file-input');
         const mixAudio = $('mix-audio');
@@ -608,8 +622,13 @@ actions.appendChild(genBtn);
         const mixDownloadLink = $('mix-download-link');
 
         const pxPerSec = 120; // scale
+        const rowHeight = 80; // px per track row
         let baseSampleRateMix = null; // mono only for now
-        const timelineClips = new Map(); // id -> { id, label, pcmI16, sampleRate, durationMs, inMs, outMs, offsetMs, volume, source }
+        const timelineRows = [
+            { id: 'row-0', name: 'Voice' },
+            { id: 'row-1', name: 'Music' },
+        ];
+        const timelineClips = new Map(); // id -> { id, row, label, pcmI16, sampleRate, durationMs, inMs, outMs, offsetMs, volume, source }
 
         function samplesToMs(samples, sampleRate) { return (samples / sampleRate) * 1000; }
         function msToSamples(ms, sampleRate) { return Math.round((ms / 1000) * sampleRate); }
@@ -640,23 +659,47 @@ actions.appendChild(genBtn);
         }
 
         function renderTimeline() {
-            // Compute total length
+            // Compute total length in ms
             let totalMs = 0;
             for (const c of timelineClips.values()) {
                 const len = c.offsetMs + (c.outMs - c.inMs);
                 if (len > totalMs) totalMs = len;
             }
             const minWidth = Math.max(600, Math.ceil(msToPx(totalMs)) + 40);
+            const totalHeight = Math.max(rowHeight, rowHeight * timelineRows.length);
             timelineBar.style.width = minWidth + 'px';
+            timelineBar.style.height = totalHeight + 'px';
             timelineBar.innerHTML = '';
+
+            // Draw row backgrounds
+            for (let i = 0; i < timelineRows.length; i++) {
+                const rowEl = document.createElement('div');
+                rowEl.className = 'timeline-row';
+                rowEl.style.top = (i * rowHeight) + 'px';
+                timelineBar.appendChild(rowEl);
+            }
+            // Draw track headers
+            if (trackHeaders) {
+                trackHeaders.innerHTML = '';
+                for (let i = 0; i < timelineRows.length; i++) {
+                    const h = document.createElement('div');
+                    h.className = 'track-header-row';
+                    h.textContent = timelineRows[i].name;
+                    trackHeaders.appendChild(h);
+                }
+            }
 
             for (const c of timelineClips.values()) {
                 const left = Math.max(0, Math.floor(msToPx(c.offsetMs)));
                 const width = Math.max(20, Math.floor(msToPx(c.outMs - c.inMs)));
+                const rowIndex = Math.max(0, Math.min((c.row ?? 0), timelineRows.length - 1));
+                const top = rowIndex * rowHeight + 8; // 8px top padding inside row
+
                 const el = document.createElement('div');
                 el.className = 'clip';
                 el.style.left = left + 'px';
                 el.style.width = width + 'px';
+                el.style.top = top + 'px';
                 el.dataset.clipId = c.id;
 
                 const hL = document.createElement('div'); hL.className = 'handle handle-left';
@@ -668,11 +711,27 @@ actions.appendChild(genBtn);
                 el.appendChild(hL); el.appendChild(hR); el.appendChild(content);
                 timelineBar.appendChild(el);
 
-                // Drag clip
+                // Drag clip horizontally and snap vertically to rows
                 content.addEventListener('pointerdown', e => {
                     e.preventDefault();
-                    const startX = e.clientX; const startOffset = c.offsetMs;
-                    const move = ev => { const dx = ev.clientX - startX; c.offsetMs = Math.max(0, startOffset + pxToMs(dx)); el.style.left = Math.floor(msToPx(c.offsetMs)) + 'px'; };
+                    const startX = e.clientX;
+                    const startOffset = c.offsetMs;
+                    const rect = timelineBar.getBoundingClientRect();
+                    const move = ev => {
+                        const dx = ev.clientX - startX;
+                        // horizontal move -> time offset
+                        c.offsetMs = Math.max(0, startOffset + pxToMs(dx));
+                        el.style.left = Math.floor(msToPx(c.offsetMs)) + 'px';
+                        // vertical move -> row snap
+                        const y = ev.clientY - rect.top;
+                        let newRow = Math.floor(y / rowHeight);
+                        if (newRow < 0) newRow = 0;
+                        if (newRow > timelineRows.length - 1) newRow = timelineRows.length - 1;
+                        if (newRow !== c.row) {
+                            c.row = newRow;
+                            el.style.top = (newRow * rowHeight + 8) + 'px';
+                        }
+                    };
                     const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
                     window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
                 });
@@ -728,6 +787,7 @@ actions.appendChild(genBtn);
                 inMs: 0,
                 outMs: durationMs,
                 offsetMs: existing ? existing.offsetMs : 0,
+                row: existing ? existing.row : 0,
                 volume: 1.0,
                 source: 'tts',
             };
@@ -768,7 +828,7 @@ actions.appendChild(genBtn);
                 const i16 = float32ToInt16(resampled);
                 const durationMs = samplesToMs(i16.length, baseSampleRateMix);
                 const id = `music-${Date.now()}`;
-                const clip = { id, label: file.name, pcmI16: i16, sampleRate: baseSampleRateMix, durationMs, inMs: 0, outMs: durationMs, offsetMs: 0, volume: 1.0, source: 'file' };
+                const clip = { id, label: file.name, pcmI16: i16, sampleRate: baseSampleRateMix, durationMs, inMs: 0, outMs: durationMs, offsetMs: 0, row: Math.max(0, timelineRows.length - 1), volume: 1.0, source: 'file' };
                 addOrUpdateClip(clip);
             } catch (err) {
                 console.error('Music import failed', err);
@@ -776,6 +836,14 @@ actions.appendChild(genBtn);
             } finally {
                 musicFileInput.value = '';
             }
+        });
+
+        // Add new row
+        addRowBtn.addEventListener('click', () => {
+            const id = `row-${timelineRows.length}`;
+            const name = `Row ${timelineRows.length + 1}`;
+            timelineRows.push({ id, name });
+            renderTimeline();
         });
 
         // Render final mix
